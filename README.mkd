@@ -1,0 +1,39 @@
+# hap2 -- my version of 'scrypt'
+
+This program implements the basic idea behind [scrypt][], as seen in slide 11
+of the [scrypt PDF][spdf].
+
+## usage
+
+You run `hap2 <site name+salt>`, it asks for a master password, you type it,
+then you wait a bit, and it prints the password for the site.
+
+    hap2 gmail.com+1
+    master password: <type master password; won't echo>
+    <wait a bit>
+    7qFAXLSm1Lek6c6hyV7E9cyXMwU6HNFhana2H+diYvA
+
+The salt ("+1" in this example) is there because some sites force you to
+change passwords regularly.  The idea is that you generate the next password
+by simply incrementing the number.  Or you could use the year+month, e.g.,
+`gmail.com+201306`.
+
+Note that you *will* need to remember this "salt", although it need not be
+kept secret.  (See TODO list for more).
+
+## differences from scrypt
+
+I am only interested in the basic idea from scrypt, and to implement something
+that is close enough using perl and commonly installed perl modules.  I don't
+need it to be exactly the same.
+
+For example, I use HMACSHA2 instead of PBKDF2.  In fact, since I have looked
+at neither the full scrypt paper, nor the source code for scrypt, there are
+probably several other differences.
+
+It also doesn't have any of the time/memory constraint settings that the
+original scrypt program has.  We just use a hardcoded 1 million rounds for
+now.  (Again, see TODO list for more).
+
+[scrypt]: http://www.tarsnap.com/scrypt.html
+[spdf]: http://www.tarsnap.com/scrypt/scrypt-slides.pdf

@@ -1,0 +1,97 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+# see README.mkd and TODO for more info
+
+use MIME::Base64;
+use Digest::SHA qw(sha256 hmac_sha256 hmac_sha256_base64);
+
+# ----------------------------------------------------------------------
+
+my $N = 1_000_000;    # ROMix iterations
+# other non-parametrised settings:
+# - SHA256 as H in ROMix
+# - unpack("L") as "Integerify" in ROMix
+
+# ----------------------------------------------------------------------
+
+my $ss = shift;
+die "need site name+salt\n" unless $ss;
+
+print "master password: ";
+my $mp = read_s();
+die "need master password\n" unless $mp;
+
+# ----------------------------------------------------------------------
+
+t_start();
+my $salt = sha256($ss);
+my $h1   = hmac_sha256( $mp, $salt );
+my $h2   = ROMix($h1);
+my $h3   = hmac_sha256_base64( $h2, $salt );
+print STDERR t_lap() . "\n";
+print "$h3\n";
+
+# ----------------------------------------------------------------------
+
+sub ROMix {
+    my $in = shift;
+    my ( $X, $i, @V, $j );
+
+    $V[0] = $in;
+    for ( $i = 1; $i <= $N; $i++ ) {
+        $V[$i] = sha256( $V[ $i - 1 ] );
+    }
+    $X = $V[$N];
+    print STDERR t_lap() . "\n";
+
+    for ( $i = 1; $i <= $N; $i++ ) {
+        $j = unpack( "L", $X ) % $N;
+        $X = sha256( $X ^ $V[$j] );
+    }
+
+    return $X;
+}
+
+# ----------------------------------------------------------------------
+
+# service routines
+
+# this is much better than fiddling with hard-to-use modules like
+# Term::ReadLine or installing non-core modules like Term::ReadKey.  I've
+# never been a "pure perl" fanatic anyway :-)
+sub read_s {
+    my $in;
+    $in = `/bin/bash -c 'read -s foo; echo \$foo'`;
+    chomp($in);
+    print "\n";
+    return $in;
+}
+
+sub dd {
+    use Data::Dumper;
+    for my $i (@_) {
+        print STDERR "DBG: " . t_lap() . ": " . Dumper($i);
+    }
+}
+
+sub ddh {
+    dd [ unpack( "H*", +shift ) ];
+}
+
+{
+    use Time::HiRes;
+    my %start_times;
+
+    sub t_start {
+        my $name = shift || 'default';
+        $start_times{$name} = [ Time::HiRes::gettimeofday() ];
+    }
+
+    sub t_lap {
+        my $name = shift || 'default';
+        return Time::HiRes::tv_interval( $start_times{$name} );
+    }
+}
+
