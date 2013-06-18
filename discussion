@@ -1,0 +1,38 @@
+(note: when I mentioned "linkedin" below, take that to mean any generic site
+that happened to lose a few hundred thousand password hashes, salted or not).
+
+other notes
+
+  - from http://www.schneier.com/blog/archives/2013/06/a_really_good_a.html
+
+      - just heard of "Password Hasher" addon for firefox
+
+      - someone argues that an encrypted vault is just as secure as a hasher
+
+        my thoughts:
+
+          - case 1: if you don't know my actual password to some site (via a
+            weakness in that site, or whatever), then, with a hasher, there is
+            no target to search.  You just have an algorithm, and no more
+            info!
+
+            With an encrypted database, you still have a target for your brute
+            force attempts.
+
+            (NOTE: this assumes a correct decryption can be "recognised" in
+            some way, like perhaps it has some metadata or tags or has only
+            printable characters, or whatever.  However, if the decrypted data
+            *also* looks like random binary blob then I agree it is secure.
+            I'm not sure how many of them satisfy this condition though.)
+
+          - case 2: if you *do* know my actual password to some site, then
+            both appear to be equally secure, I agree.  You have a target to
+            search and an algorithm.
+
+      - same person mentions changing the password to just *one* site, not
+        all.  I think this is covered by my TODO, clearly such a database
+        (plus UI, ideally) is needed to use a hasher.  Once you have that,
+        this point goes away.
+
+      - oh goody, Clive Robinson says passwords are unlikely to disappear
+        anytime soon!  Finally, someone else thinking the same!

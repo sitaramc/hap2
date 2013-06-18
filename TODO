@@ -1,15 +1,16 @@
 TODO
 
-Ideally, hap2 will have a wrapper that maintains a simple database, and a UI
-of some sort, to provide the following features:
+Right now, hap2 uses a fixed format file that is manually edited.
+
+Ideally, hap2 will have a wrapper that maintains this file, and maybe a UI of
+some sort, to provide the following features:
 
   * generate and save random salt for a site
-  * remember salt for all sites
-  * set key length for a site
   * mark some sites "high risk" and force a longer master password for them
   * set number of rounds for a site (currently hardcoded to 1 million)
   * save miscellaneous notes for a site
   * keep a log so you can see when you last logged on to a site
+  * support sites that have max key lengths or other rules for passwords
 
-hap2 will of course change a bit to accommodate all this (like take more
-command line options), but most of it will be in the wrapper program.
+hap2 will of course change a bit to accommodate all this (like honor the max
+key length setting, etc) but most of it will be in the wrapper program.

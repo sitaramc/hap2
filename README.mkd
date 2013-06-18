@@ -5,21 +5,59 @@ of the [scrypt PDF][spdf].
 
 ## usage
 
-You run `hap2 <site name+salt>`, it asks for a master password, you type it,
-then you wait a bit, and it prints the password for the site.
+You run `hap2 <site nickname>`, it prints some information, then asks for a
+master password, you type it, then you wait a bit, and it prints the password
+for the site.  For example, if you type `hap2 foo`, you might see this:
 
-    hap2 gmail.com+1
-    master password: <type master password; won't echo>
-    <wait a bit>
-    7qFAXLSm1Lek6c6hyV7E9cyXMwU6HNFhana2H+diYvA
+    foo
+        user = alice
+        salt = bar
+        site = foo.com
+        sec = medium
 
-The salt ("+1" in this example) is there because some sites force you to
-change passwords regularly.  The idea is that you generate the next password
-by simply incrementing the number.  Or you could use the year+month, e.g.,
-`gmail.com+201306`.
+    master password: 
+    SUQCn5mA0k+6xFrxK+V2mNJ0zanqHDS69VuEL1+R2LQ
+
+(The password will not echo of course).
+
+In this case it is running the main algorithm with `alice+bar@foo.com` as the
+"text" and the password supplied (in this case `baz`).  A good test, if you
+want to implement this yourself, is to run the same combination and see if you
+get the same output.
+
+## the sitelist file
+
+hap2 uses a sitelist file (currently hardcoded to `~/.config/hap2.sitelist`),
+which contains a list of paragraphs like this:
+
+    foo
+        user = alice
+        salt = bar
+        site = foo.com
+        sec = medium
+
+The format is simple:
+
+  * the first line MUST start in column 1 and should be a nickname for the
+    user+site combination, to be used on the command line as you saw above
+  * the rest are indented key/value pairs
+      * the currently recognised keywords are user, site, and salt.  The rest
+        are just hints to the user
+  * comment lines are allowed
+  * the paragraphmust end in a blank line or end of file
+
+The input to the main algorithm becomes
+
+    user+salt@site
+
+The salt is used to allow changing passwords for a site without changing the
+master password or the username.  This is especially useful for sites which
+force you to change your password every 30 days or whatever.  You can either
+simply increment the number, or you could use the year+month, e.g., 201306
 
 Note that you *will* need to remember this "salt", although it need not be
-kept secret.  (See TODO list for more).
+kept secret.  In other words, **BACKUP YOUR SITELIST FILE!!**.  (See TODO list
+for more).
 
 ## differences from scrypt
 
