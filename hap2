@@ -6,7 +6,7 @@ use 5.10.0;
 # see README.mkd and TODO for more info
 
 use MIME::Base64;
-use Digest::SHA qw(sha256 hmac_sha256 hmac_sha256_base64);
+use Digest::SHA qw(sha256 sha256_base64 hmac_sha256 hmac_sha256_base64);
 
 # ----------------------------------------------------------------------
 
@@ -25,8 +25,8 @@ die "need site nickname\n" unless $sn;
 
 # get site details from sitelist file
 my %sd = read_sl($sn);
-die unless $sd{site};
-die unless $sd{user};
+die "could not find site with nickname '$sn'\n" unless $sd{site};
+die "nickname '$sn' does not specify a user\n" unless $sd{user};
 $sd{salt} ||= 1;
 
 # create the internal salt, to be used in the hap2() function
@@ -44,6 +44,7 @@ say hap2( $ss, $mp );
 sub hap2 {
     my ( $ss, $mp ) = @_;
     t_start();
+    say "computing password for '$ss'";
 
     # convert to 256 bits :-)
     my $salt = sha256($ss);
@@ -54,7 +55,11 @@ sub hap2 {
     my $h2   = ROMix($h1);
     my $h3   = hmac_sha256_base64( $salt, $h2 );
     print STDERR t_lap() . "\n";
-    return $h3;
+
+    # customise the return for specific site needs
+    my $h4 = site_cust($h3);
+
+    return $h4;
 }
 
 # ----------------------------------------------------------------------
@@ -78,6 +83,27 @@ sub ROMix {
     return $X;
 }
 
+sub site_cust {
+    my $h = shift;
+    # $h is about 43 characters, normally.  We may need to chop it down, or
+    # add special characters, etc., based on site specific needs.
+
+    my $check = sha256_base64($h);
+    if (my $c = $sd{check}) {
+        die "FATAL: check value mismatch; possible wrong password entered\n" if $c ne $check;
+    } else {
+        say "consider adding\n    check   =   $check\nto $sl";
+    }
+
+    # len
+    $h = substr($h, 0, $sd{len}) if $sd{len};
+
+    # finally, add suffix if one is specified
+    $h .= $sd{suffix} if $sd{suffix};
+
+    return $h;
+}
+
 # ----------------------------------------------------------------------
 
 # service routines
@@ -88,7 +114,7 @@ sub read_sl {
 
     local @ARGV = ($sl);
     while (<>) {
-        next unless /^(?=\S)($sn)/ .. /^$/;
+        next unless /^\s*($sn)[^=]*$/ .. /^$/;
 
         print;
         s/#.*//;

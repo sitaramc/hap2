@@ -5,59 +5,122 @@ of the [scrypt PDF][spdf].
 
 ## usage
 
-You run `hap2 <site nickname>`, it prints some information, then asks for a
-master password, you type it, then you wait a bit, and it prints the password
-for the site.  For example, if you type `hap2 foo`, you might see this:
+First, create a file called `hap2.sitelist` in `~/.config`.
 
-    foo
-        user = alice
-        salt = bar
-        site = foo.com
-        sec = medium
+We will use the following example all through, so put the following text into
+that file:
 
-    master password: 
-    SUQCn5mA0k+6xFrxK+V2mNJ0zanqHDS69VuEL1+R2LQ
+    test
+        user    =   alice
+        site    =   foo.com
+        salt    =   2
+        sec     =   medium
+        len     =   10
+        suffix  =   !
+        # check   =   JPMMHM1SLYFCJ82E4hvCvlEnJL3MAeX1QHby/AneGfE
+        # ...additional comments and reminders/notes for yourself...
 
-(The password will not echo of course).
+The first line is a "site nickname".  The rest of the lines are key/value
+pairs for this site.
 
-In this case it is running the main algorithm with `alice+bar@foo.com` as the
-"text" and the password supplied (in this case `baz`).  A good test, if you
-want to implement this yourself, is to run the same combination and see if you
-get the same output.
+To compute the password for this test site, just run `hap2 test`.
+
+Hap2 will print all the key/value pairs, then ask for a master password.  Type
+in your master password.  At this point you wait for a while and it prints you
+the computed password.
 
 ## the sitelist file
 
-hap2 uses a sitelist file (currently hardcoded to `~/.config/hap2.sitelist`),
-which contains a list of paragraphs like this:
+### location and overall format
 
-    foo
-        user = alice
-        salt = bar
-        site = foo.com
-        sec = medium
+Currently, the sitelist file is hardcoded to `~/.config/hap2.sitelist`,
+although of course you can make that a symlink to something else.
 
-The format is simple:
+Hap2 only reads this file.  There is no GUI to edit it, but a very good gui
+program that I have found very useful can be found [here](http://www.vim.org).
 
-  * the first line MUST start in column 1 and should be a nickname for the
-    user+site combination, to be used on the command line as you saw above
+The rules for the file are:
+
+  * the nickname line should contain *just* the site nickname, nothing else
   * the rest are indented key/value pairs
-      * the currently recognised keywords are user, site, and salt.  The rest
-        are just hints to the user
   * comment lines are allowed
-  * the paragraphmust end in a blank line or end of file
+  * a blank line or end of file ends the list of key/value pairs for the site
+    being specified (in other words, don't insert blank lines unnecessarily!)
 
-The input to the main algorithm becomes
+### keywords recognised
 
-    user+salt@site
+#### user, site, salt
 
-The salt is used to allow changing passwords for a site without changing the
-master password or the username.  This is especially useful for sites which
-force you to change your password every 30 days or whatever.  You can either
-simply increment the number, or you could use the year+month, e.g., 201306
+As you know, hap2 basically computes something from a given input string.  The
+first 3 fields produce this input string.  In our example, it will be
+`alice+2@foo.com`.
 
-Note that you *will* need to remember this "salt", although it need not be
-kept secret.  In other words, **BACKUP YOUR SITELIST FILE!!**.  (See TODO list
-for more).
+The **salt** field needs some explanation.  This field is mainly used when you
+need to change the password for a site, for whatever reason.  Just put
+something different in the salt field, and you get a different password.
+
+Typical values for salt are the date of the password reset (2013-06, or
+2013-06-23, etc.) or a number that is incremented by 1 each time you change
+the password (1, 2, ...).  In fact, **the default salt, if you don't supply
+one, is "1"**.
+
+<font color="red">**IMPORTANT**: you *will* need to remember this "salt",
+although it need not be kept secret.  In other words, **BACKUP YOUR SITELIST
+FILE!!**.</font>  (See TODO list for more).
+
+#### sec
+
+The 'sec' keyword is only a reminder for you.  I tend to use even different
+*master passwords* -- I have 3, with different lengths, which I simply call my
+low-, medium-, and high-security passwords.  (The "low" is a relative term;
+even that is 9 characters!).  This field is just a reminder to me about which
+one I used for this site.  You could have your own convention.
+
+This field is *somewhat* sensitive in that a site that has "sec = low" may be
+a better target for an attacker wanting to brute force hap2 itself.  If you're
+worried about that, don't use this field, and use the same, **long**, master
+password for all sites.
+
+#### len
+
+The 'len' keyword says where to truncate the output, for sites that don't like
+overly long passwords (yes, some sites have this stupid restriction, which
+makes no sense to me!).
+
+Note that if a "suffix" keyword (see later) is specified, the suffix value is
+added *after* the "len" truncation, so then the final password will be a bit
+longer.
+
+Also note that any site which restricts passwords to below 12 characters in
+length should be avoided.  If you can't avoid it, at least [name and
+shame](https://defuse.ca/password-policy-hall-of-shame.htm) it!
+
+#### suffix
+
+Some sites have stupid requirements like "at least one uppercase, one special
+character, ..." and so on.  If the password generated by hap2 does not meet
+the criteria, you can specify a suffix that will get tacked on to the end.
+
+I considered specifying all the requirements, then writing code to analyse the
+generated password and morph it to meet those requirements, but it didn't seem
+worth the effort.
+
+#### check
+
+During the initial days of testing, I used to worry that if I ever mis-typed
+the master password, of if hap2 ever had a bug, I'd never know, and I'd keep
+trying with the password, and probably get locked out if the website has a
+limit on that or something.
+
+That led to the 'check' idea.  When the sitelist file does *not* have a
+'check' field for the site, then hap2 generates a 'check' value.  (This is
+simply a sha256 of the generated full strength password, before truncation for
+'len' etc.).  It then prompts you to add this line to the sitelist file, so
+that future runs of hap2 for that nickname can check if the correct password
+was generated.
+
+Don't forget to update this if you change the salt, though!  To compute the
+new 'check' value, just comment out the 'check' line and run hap2 again.
 
 ## differences from scrypt
 
