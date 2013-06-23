@@ -92,6 +92,7 @@ sub read_sl {
 
         print;
         s/#.*//;
+        s/\s*$//;   # cut out trailing spaces
         next unless /^\s+(\S+)\s*=\s*(.*)/;
         die "\nWARNING: duplicate entry for '$1'\n\t'$2' overrides '$h{$1}'\n" if $h{$1};
         $h{$1} = $2;
