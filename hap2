@@ -37,7 +37,14 @@ print "\nmaster password: ";
 my $mp = read_s();
 die "need master password\n" unless $mp;
 
-say hap2( $ss, $mp );
+# special bypass routine for old hap
+if ( $sd{sec} eq 'hap' ) {
+    show( hap($mp) );
+    exit;
+}
+
+# print, xsel, etc...
+show( hap2( $ss, $mp ) );
 
 # ----------------------------------------------------------------------
 
@@ -62,6 +69,34 @@ sub hap2 {
     return $h4;
 }
 
+sub hap {
+    my $key = shift;
+
+    if ( $sn eq 'gen' ) {
+        my $sitenick = shift @ARGV or die "need sitenick";
+        $sd{$sitenick} or die "sitenick '$sd{sitenick}' not found";
+        my ( $user, $comment );
+        ( $user, $sd{site}, $sd{salt}, $sd{check}, $comment ) = split ' ', $sd{$sitenick};
+        say "\tuser    =   $user";
+        say "\tsite    =   $sd{site}";
+        say "\tcomment =   $comment" if $comment;
+    }
+
+    # hap's default salt is an empty string, unlike hap2
+    $sd{salt} ||= '';
+
+    my $data = $sd{site} . $sd{salt};
+    $sd{len} ||= 14;
+
+    my $sha;
+
+    if ( eval "use Digest::SHA qw(hmac_sha1_base64); 1" ) {
+        $sha = hmac_sha1_base64( $data, $key );
+    } else {
+        $sha = `echo -n '$data' | openssl sha1 -binary -hmac '$key' | openssl base64`;
+    }
+    return site_cust($sha);
+}
 # ----------------------------------------------------------------------
 
 sub ROMix {
@@ -116,7 +151,7 @@ sub read_sl {
     while (<>) {
         next unless /^\s*($sn)[^=]*$/ .. /^$/;
 
-        print;
+        print unless $sn eq 'gen';
         s/#.*//;
         s/\s*$//;    # cut out trailing spaces
         next unless /^\s+(\S+)\s*=\s*(.*)/;
@@ -136,6 +171,22 @@ sub read_s {
     chomp($in);
     print "\n";
     return $in;
+}
+
+sub show {
+    my $sha = shift;
+    say $sha;
+    # if $DISPLAY is set, set the X selection, wait, and clear it
+    if ( $ENV{DISPLAY} ) {
+        system("echo -n '$sha' | xsel");
+        # clear out xsel if done (or user can Ctrl-C out)
+        print "X selection buffer set; press enter to clear it:";
+        <>;
+        my $dummy = '#' x 160;
+        system("echo -n '$dummy' | xsel");
+        $dummy = '#' x 16;
+        system("echo -n '$dummy' | xsel");
+    }
 }
 
 sub dd {
