@@ -26,7 +26,7 @@ die "need site nickname\n" unless $sn;
 # get site details from sitelist file
 my %sd = read_sl($sn);
 die "could not find site with nickname '$sn'\n" unless $sd{site};
-die "nickname '$sn' does not specify a user\n" unless $sd{user};
+die "nickname '$sn' does not specify a user\n"  unless $sd{user};
 $sd{salt} ||= 1;
 
 # create the internal salt, to be used in the hap2() function
@@ -51,9 +51,9 @@ sub hap2 {
     # everything is in 256 bits from now on
 
     # step 1 -- hmac with the master password
-    my $h1   = hmac_sha256( $salt, $mp );
-    my $h2   = ROMix($h1);
-    my $h3   = hmac_sha256_base64( $salt, $h2 );
+    my $h1 = hmac_sha256( $salt, $mp );
+    my $h2 = ROMix($h1);
+    my $h3 = hmac_sha256_base64( $salt, $h2 );
     print STDERR t_lap() . "\n";
 
     # customise the return for specific site needs
@@ -89,14 +89,14 @@ sub site_cust {
     # add special characters, etc., based on site specific needs.
 
     my $check = sha256_base64($h);
-    if (my $c = $sd{check}) {
+    if ( my $c = $sd{check} ) {
         die "FATAL: check value mismatch; possible wrong password entered\n" if $c ne $check;
     } else {
         say "consider adding\n    check   =   $check\nto $sl";
     }
 
     # len
-    $h = substr($h, 0, $sd{len}) if $sd{len};
+    $h = substr( $h, 0, $sd{len} ) if $sd{len};
 
     # finally, add suffix if one is specified
     $h .= $sd{suffix} if $sd{suffix};
@@ -118,7 +118,7 @@ sub read_sl {
 
         print;
         s/#.*//;
-        s/\s*$//;   # cut out trailing spaces
+        s/\s*$//;    # cut out trailing spaces
         next unless /^\s+(\S+)\s*=\s*(.*)/;
         die "\nWARNING: duplicate entry for '$1'\n\t'$2' overrides '$h{$1}'\n" if $h{$1};
         $h{$1} = $2;
