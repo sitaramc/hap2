@@ -12,8 +12,8 @@ that file:
 
     test
         user    =   alice
-        site    =   foo.com
         salt    =   2
+        site    =   foo.com
         sec     =   medium
         len     =   10
         suffix  =   !
@@ -138,3 +138,54 @@ now.  (Again, see TODO list for more).
 
 [scrypt]: http://www.tarsnap.com/scrypt.html
 [spdf]: http://www.tarsnap.com/scrypt/scrypt-slides.pdf
+
+# emulating [hap][]
+
+The original [hap][] program is still pretty good for low-value sites where
+the payoff to hack your account is not much.  Most junk website registrations
+fall into this category.  (Tip: use a different -- equally junk -- email as
+the contact address for these sites!)
+
+The biggest advantage of the original hap is that it can run from any web
+browser.  However, I got tired of maintaining two "data" files and running two
+programs.
+
+Thus the hap emulation was born.  To use it, simply add a para like this to
+your hap2 sitelist file (`~/.config/hap2.sitelist`)
+
+    hap-example
+        sec     =   hap
+        user    =   documentation-only--not-used
+        site    =   example.com
+        salt    =   NaCl
+        check   =   some-large-base64-value
+        len     =   14
+        suffix  =   !
+
+Note the "sec = hap" line; this invokes the old hap algorithm instead of the
+much slower on that hap2 uses.  Other than that everything else is pretty much
+the same as before.
+
+Curiously, once this happened I got a bit more greedy.  There's now an even
+*more* abbreviated form.  To understand that, here's an excerpt from my
+sitelist file.  Note that the sitelist name "gen" is special; it is short for
+"generic" and is required, if you want to do this.
+
+    # generic hap para; simpler way to specify LOTS of junk sites' passwords
+    gen
+        sec     =   hap
+        site    =   dummy
+        user    =   dummy
+        #
+        # no 'len', no 'suffix' in this scheme
+        # nick  =   user        site            salt (1)    check                                           comment
+        #
+        # mildly important site
+        foo     =   sitaram     foo.org         0           LD+xm+UsRGaRdWsQDK/uI+wkvfBUKMu6fBtAF05ZbiM
+        #
+        # mostly junk sites
+        sf      =   sitaram_c   sourceforge.net 2014-05-22  m2DLidG/9N3B1W84wKxT7UIArmLp1AA98QIVCW15DWQ
+
+To use this, you must run (for example) `hap2 gen foo`, or `hap2 gen sf`.
+
+[hap]: http://gitolite.com/hap
