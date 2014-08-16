@@ -21,7 +21,8 @@ my $sl = "$ENV{HOME}/.config/hap2.sitelist";
 
 # get site nickname from command line
 my $sn = shift;
-die "need site nickname\n" unless $sn;
+print_nicks() unless $sn;
+die "\nneed site nickname\n" unless $sn;
 
 # get site details from sitelist file
 my %sd = read_sl($sn);
@@ -215,3 +216,16 @@ sub ddh {
     }
 }
 
+sub print_nicks {
+    local @ARGV = ($sl);
+
+    while (<>) {
+        say $1 if /^\s*([\w.-]+)[^=]*$/;
+        last if $1 and $1 eq 'gen';
+    }
+
+    while (<>) {
+        # atleast 3 fields after "="
+        say "\t$1\t$2" if /^\s*([\w.-]+)\s*=\s*\S+\s+(\S+)\s+\S+/;
+    }
+}
