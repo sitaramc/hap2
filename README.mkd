@@ -147,8 +147,14 @@ fall into this category.  (Tip: use a different -- equally junk -- email as
 the contact address for these sites!)
 
 The biggest advantage of the original hap is that it can run from any web
-browser.  However, I got tired of maintaining two "data" files and running two
-programs.
+browser, and you can emulate it on the command line:
+
+    echo -n "$domain$salt" |
+        openssl sha1 -binary -hmac "$master_password" |
+        openssl base64 |
+        cut -c1-${maxlen:-14}
+
+However, I got tired of maintaining two "data" files and running two programs.
 
 Thus the hap emulation was born.  To use it, simply add a para like this to
 your hap2 sitelist file (`~/.config/hap2.sitelist`)
