@@ -179,14 +179,14 @@ sub show {
     say $sha;
     # if $DISPLAY is set, set the X selection, wait, and clear it
     if ( $ENV{DISPLAY} ) {
-        system("echo -n '$sha' | xsel");
+        system("echo -n '$sha' | xsel -b");
         # clear out xsel if done (or user can Ctrl-C out)
         print "X selection buffer set; press enter to clear it:";
         <>;
         my $dummy = '#' x 160;
-        system("echo -n '$dummy' | xsel");
+        system("echo -n '$dummy' | xsel -b");
         $dummy = '#' x 16;
-        system("echo -n '$dummy' | xsel");
+        system("echo -n '$dummy' | xsel -b");
     }
 }
 
