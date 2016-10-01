@@ -10,28 +10,15 @@ First, create a file called `hap2.sitelist` in `~/.config`.
 We will use the following example all through, so put the following text into
 that file:
 
-    test
-        user    =   alice
-        salt    =   2
-        site    =   foo.com
-        sec     =   medium
-        len     =   10
-        suffix  =   !
-        # check   =   JPMMHM1SLYFCJ82E4hvCvlEnJL3MAeX1QHby/AneGfE
-        # ...additional comments and reminders/notes for yourself...
-
-The first line is a "site nickname".  The rest of the lines are key/value
-pairs for this site.
+    # nick  user                    salt    site                check   len suffix
+    test    alice                   2       foo.com             DGvU    10  !
 
 To compute the password for this test site, just run `hap2 test`.
 
-Hap2 will print all the key/value pairs, then ask for a master password.  Type
-in your master password.  At this point you wait for a while and it prints you
-the computed password.
+Hap2 will ask for a master password.  Type in your master password.  At this
+point you wait for a while and it prints you the computed password.
 
-## the sitelist file
-
-### location and overall format
+## the sitelist file -- location and format
 
 Currently, the sitelist file is hardcoded to `~/.config/hap2.sitelist`,
 although of course you can make that a symlink to something else.
@@ -41,19 +28,20 @@ program that I have found very useful can be found [here](http://www.vim.org).
 
 The rules for the file are:
 
-  * the nickname line should contain *just* the site nickname, nothing else
-  * the rest are indented key/value pairs
-  * comment lines are allowed
-  * a blank line or end of file ends the list of key/value pairs for the site
-    being specified (in other words, don't insert blank lines unnecessarily!)
+*   A line consists of multiple space-separated words.  The number of spaces
+    doesn't matter.
+*   The first word in the line is a "site nickname".
+*   The next 3 fields (user, salt, site) are required.
+*   The last 3 (check, len, suffix) are optional, but the field order is
+    fixed, so (for example) you cannot supply a "len" value without also
+    supplying a "check" value.
+*   comment lines are allowed
 
-### keywords recognised
+## operation
 
-#### user, site, salt
-
-As you know, hap2 basically computes something from a given input string.  The
-first 3 fields produce this input string.  In our example, it will be
-`alice+2@foo.com`.
+As you know, hap2 basically computes something from a given input string,
+which is created by combining the user, salt, and site strings.  In our
+example, it will be `alice+2@foo.com`.
 
 The **salt** field needs some explanation.  This field is mainly used when you
 need to change the password for a site, for whatever reason.  Just put
@@ -61,41 +49,46 @@ something different in the salt field, and you get a different password.
 
 Typical values for salt are the date of the password reset (2013-06, or
 2013-06-23, etc.) or a number that is incremented by 1 each time you change
-the password (1, 2, ...).  In fact, **the default salt, if you don't supply
-one, is "1"**.
+the password (1, 2, ...).
 
 <font color="red">**IMPORTANT**: you *will* need to remember this "salt",
 although it need not be kept secret.  In other words, **BACKUP YOUR SITELIST
 FILE!!**.</font>  (See TODO list for more).
 
-#### sec
+## optional fields
 
-The 'sec' keyword is only a reminder for you.  I tend to use even different
-*master passwords* -- I have 3, with different lengths, which I simply call my
-low-, medium-, and high-security passwords.  (The "low" is a relative term;
-even that is 9 characters!).  This field is just a reminder to me about which
-one I used for this site.  You could have your own convention.
+### check
 
-This field is *somewhat* sensitive in that a site that has "sec = low" may be
-a better target for an attacker wanting to brute force hap2 itself.  If you're
-worried about that, don't use this field, and use the same, **long**, master
-password for all sites.
+During the initial days of testing, I used to worry that if I ever mis-typed
+the master password, of if hap2 ever had a bug, I'd never know, and I'd keep
+trying with the password, and probably get locked out if the website has a
+limit on that or something.
 
-#### len
+That led to the 'check' idea.  When the sitelist file does *not* have a
+'check' field for the site, then hap2 generates a 'check' value.  It then
+prompts you to add this line to the sitelist file, so that future runs of hap2
+for that nickname can check if the correct password was generated.
 
-The 'len' keyword says where to truncate the output, for sites that don't like
+Don't forget to update this if you change the salt, though!  To compute the
+new 'check' value, just delete the 'check' field (and, unfortunately because
+of the rigid format, the 'len' and 'suffix' fields also) and run hap2 again.
+It will show you what the check value should be, and you can then add it (and
+add back the other two fields if they were removed).
+
+### len
+
+The 'len' field says where to truncate the output, for sites that don't like
 overly long passwords (yes, some sites have this stupid restriction, which
 makes no sense to me!).
 
-Note that if a "suffix" keyword (see later) is specified, the suffix value is
-added *after* the "len" truncation, so then the final password will be a bit
-longer.
+Note that if a "suffix" (see later) is specified, the suffix value is added
+*after* the "len" truncation, so then the final password will be a bit longer.
 
 Also note that any site which restricts passwords to below 12 characters in
 length should be avoided.  If you can't avoid it, at least [name and
 shame](https://defuse.ca/password-policy-hall-of-shame.htm) it!
 
-#### suffix
+### suffix
 
 Some sites have stupid requirements like "at least one uppercase, one special
 character, ..." and so on.  If the password generated by hap2 does not meet
@@ -104,23 +97,6 @@ the criteria, you can specify a suffix that will get tacked on to the end.
 I considered specifying all the requirements, then writing code to analyse the
 generated password and morph it to meet those requirements, but it didn't seem
 worth the effort.
-
-#### check
-
-During the initial days of testing, I used to worry that if I ever mis-typed
-the master password, of if hap2 ever had a bug, I'd never know, and I'd keep
-trying with the password, and probably get locked out if the website has a
-limit on that or something.
-
-That led to the 'check' idea.  When the sitelist file does *not* have a
-'check' field for the site, then hap2 generates a 'check' value.  (This is
-simply a sha256 of the generated full strength password, before truncation for
-'len' etc.).  It then prompts you to add this line to the sitelist file, so
-that future runs of hap2 for that nickname can check if the correct password
-was generated.
-
-Don't forget to update this if you change the salt, though!  To compute the
-new 'check' value, just comment out the 'check' line and run hap2 again.
 
 ## differences from scrypt
 
@@ -138,60 +114,3 @@ now.  (Again, see TODO list for more).
 
 [scrypt]: http://www.tarsnap.com/scrypt.html
 [spdf]: http://www.tarsnap.com/scrypt/scrypt-slides.pdf
-
-# emulating [hap][]
-
-The original [hap][] program is still pretty good for low-value sites where
-the payoff to hack your account is not much.  Most junk website registrations
-fall into this category.  (Tip: use a different -- equally junk -- email as
-the contact address for these sites!)
-
-The biggest advantage of the original hap is that it can run from any web
-browser, and you can emulate it on the command line:
-
-    echo -n "$domain$salt" |
-        openssl sha1 -binary -hmac "$master_password" |
-        openssl base64 |
-        cut -c1-${maxlen:-14}
-
-However, I got tired of maintaining two "data" files and running two programs.
-
-Thus the hap emulation was born.  To use it, simply add a para like this to
-your hap2 sitelist file (`~/.config/hap2.sitelist`)
-
-    hap-example
-        sec     =   hap
-        user    =   documentation-only--not-used
-        site    =   example.com
-        salt    =   NaCl
-        check   =   some-large-base64-value
-        len     =   14
-        suffix  =   !
-
-Note the "sec = hap" line; this invokes the old hap algorithm instead of the
-much slower on that hap2 uses.  Other than that everything else is pretty much
-the same as before.
-
-Curiously, once this happened I got a bit more greedy.  There's now an even
-*more* abbreviated form.  To understand that, here's an excerpt from my
-sitelist file.  Note that the sitelist name "gen" is special; it is short for
-"generic" and is required, if you want to do this.
-
-    # generic hap para; simpler way to specify LOTS of junk sites' passwords
-    gen
-        sec     =   hap
-        site    =   dummy
-        user    =   dummy
-        #
-        # no 'len', no 'suffix' in this scheme
-        # nick  =   user        site            salt (1)    check                                           comment
-        #
-        # mildly important site
-        foo     =   sitaram     foo.org         0           LD+xm+UsRGaRdWsQDK/uI+wkvfBUKMu6fBtAF05ZbiM
-        #
-        # mostly junk sites
-        sf      =   sitaram_c   sourceforge.net 2014-05-22  m2DLidG/9N3B1W84wKxT7UIArmLp1AA98QIVCW15DWQ
-
-To use this, you must run (for example) `hap2 gen foo`, or `hap2 gen sf`.
-
-[hap]: http://gitolite.com/hap

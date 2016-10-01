@@ -24,25 +24,16 @@ my $sn = shift;
 print_nicks() unless $sn;
 die "\nneed site nickname\n" unless $sn;
 
-# get site details from sitelist file
+# get site details (user, salt, site, [check [len [suffix]]]) from sitelist file
 my %sd = read_sl($sn);
 die "could not find site with nickname '$sn'\n" unless $sd{site};
-die "nickname '$sn' does not specify a user\n"  unless $sd{user};
-$sd{salt} ||= 1;
 
 # create the internal salt, to be used in the hap2() function
 my $ss = "$sd{user}+$sd{salt}\@$sd{site}";
-# TODO: read maxlen, special, UC/lc, and other constraints
 
 print "\nmaster password: ";
 my $mp = read_s();
 die "need master password\n" unless $mp;
-
-# special bypass routine for old hap
-if ( $sd{sec} eq 'hap' ) {
-    show( hap($mp) );
-    exit;
-}
 
 # print, xsel, etc...
 show( hap2( $ss, $mp ) );
@@ -70,34 +61,6 @@ sub hap2 {
     return $h4;
 }
 
-sub hap {
-    my $key = shift;
-
-    if ( $sn eq 'gen' ) {
-        my $sitenick = shift @ARGV or die "need sitenick";
-        $sd{$sitenick} or die "sitenick '$sd{sitenick}' not found";
-        my ( $user, $comment );
-        ( $user, $sd{site}, $sd{salt}, $sd{check}, $comment ) = split ' ', $sd{$sitenick};
-        say "\tuser    =   $user";
-        say "\tsite    =   $sd{site}";
-        say "\tcomment =   $comment" if $comment;
-    }
-
-    # hap's default salt is an empty string, unlike hap2
-    $sd{salt} ||= '';
-
-    my $data = $sd{site} . $sd{salt};
-    $sd{len} ||= 14;
-
-    my $sha;
-
-    if ( eval "use Digest::SHA qw(hmac_sha1_base64); 1" ) {
-        $sha = hmac_sha1_base64( $data, $key );
-    } else {
-        $sha = `echo -n '$data' | openssl sha1 -binary -hmac '$key' | openssl base64`;
-    }
-    return site_cust($sha);
-}
 # ----------------------------------------------------------------------
 
 sub ROMix {
@@ -125,10 +88,11 @@ sub site_cust {
     # add special characters, etc., based on site specific needs.
 
     my $check = sha256_base64($h);
+    $check = substr($check, 0, 2) . substr($check, -2);
     if ( my $c = $sd{check} ) {
         die "FATAL: check value mismatch; possible wrong password entered\n" if $c ne $check;
     } else {
-        say "consider adding\n    check   =   $check\nto $sl";
+        say "consider adding '$check' as the check value for this line";
     }
 
     # len
@@ -147,20 +111,23 @@ sub site_cust {
 sub read_sl {
     my $sn = shift;
     my %h;
+    my @keys = qw( user salt site check len suffix );
+    my @words;
 
     local @ARGV = ($sl);
     while (<>) {
-        next unless /^\s*($sn)[^=]*$/ .. /^$/;
+        s/^\s+//; s/\s+$//; next unless /\S/;
 
-        print unless $sn eq 'gen';
-        s/#.*//;
-        s/\s*$//;    # cut out trailing spaces
-        next unless /^\s+(\S+)\s*=\s*(.*)/;
-        die "\nWARNING: duplicate entry for '$1'\n\t'$2' overrides '$h{$1}'\n" if $h{$1};
-        $h{$1} = $2;
+        @words = split(' ', $_);
+        next unless $words[0] eq $sn;
+
+        shift @words;
+        %h = map { $keys[$_] => $words[$_] } 0..5;
+        # flush STDIN by continuing (we assume no duplicates)
     }
 
-    return %h;
+    return %h if %h;
+    die "nick '$sn' not found\n";
 }
 
 # this is much better than fiddling with hard-to-use modules like
@@ -220,12 +187,9 @@ sub print_nicks {
     local @ARGV = ($sl);
 
     while (<>) {
-        say $1 if /^\s*([\w.-]+)[^=]*$/;
-        last if $1 and $1 eq 'gen';
+        print "\n$_" if /^# --/;
+        next if /^\s*#/;
+        print "$1, " if /^\s*([\w.-]+)/;
     }
-
-    while (<>) {
-        # atleast 3 fields after "="
-        say "\t$1\t$2" if /^\s*([\w.-]+)\s*=\s*\S+\s+(\S+)\s+\S+/;
-    }
+    say "";
 }
