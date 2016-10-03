@@ -19,14 +19,20 @@ my $sl = "$ENV{HOME}/.config/hap2.sitelist";
 
 # ----------------------------------------------------------------------
 
-# get site nickname from command line
-my $sn = shift;
-print_nicks() unless $sn;
-die "\nneed site nickname\n" unless $sn;
+my %sd;
+# get site details (user, salt, site, [check [len [suffix]]]) from sitelist file or ARGV
+if (@ARGV >= 3) {
+    %sd = ( user => $ARGV[0], salt => $ARGV[1], site => $ARGV[2], len => $ARGV[3] || 0 );
+    @ARGV = ();
+} else {
+    # get site nickname from command line
+    my $sn = shift;
+    print_nicks() unless $sn;
+    die "\nneed site nickname\n" unless $sn;
 
-# get site details (user, salt, site, [check [len [suffix]]]) from sitelist file
-my %sd = read_sl($sn);
-die "could not find site with nickname '$sn'\n" unless $sd{site};
+    %sd = read_sl($sn);
+    die "could not find site with nickname '$sn'\n" unless $sd{site};
+}
 
 # create the internal salt, to be used in the hap2() function
 my $ss = "$sd{user}+$sd{salt}\@$sd{site}";
