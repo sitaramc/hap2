@@ -5,6 +5,8 @@ of the [scrypt PDF][spdf].
 
 ## usage
 
+### (normal usage) with a sitelist file
+
 First, create a file called `hap2.sitelist` in `~/.config`.
 
 We will use the following example all through, so put the following text into
@@ -15,8 +17,21 @@ that file:
 
 To compute the password for this test site, just run `hap2 test`.
 
-Hap2 will ask for a master password.  Type in your master password.  At this
-point you wait for a while and it prints you the computed password.
+Hap2 will ask for a master passphrase.  Type in your master passphrase.  At
+this point you wait for a while and it prints you the computed password.
+
+### (emergency use) without sitelist file
+
+If you don't have your sitelist file handy, but you *are* on a machine you
+trust, *and* you remember the details of the site for which you need the
+password, you can just get the hap2 script [scr] and run a command like this:
+
+    hap2 sitaramc 1 gmail.com
+
+It'll prompt you for the master passphrase and once you type that you get your
+password.
+
+[scr]: https://raw.githubusercontent.com/sitaramc/hap2/master/hap2
 
 ## the sitelist file -- location and format
 
@@ -60,7 +75,7 @@ FILE!!**.</font>  (See TODO list for more).
 ### check
 
 During the initial days of testing, I used to worry that if I ever mis-typed
-the master password, of if hap2 ever had a bug, I'd never know, and I'd keep
+the master passphrase, of if hap2 ever had a bug, I'd never know, and I'd keep
 trying with the password, and probably get locked out if the website has a
 limit on that or something.
 

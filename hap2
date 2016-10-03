@@ -37,9 +37,9 @@ if (@ARGV >= 3) {
 # create the internal salt, to be used in the hap2() function
 my $ss = "$sd{user}+$sd{salt}\@$sd{site}";
 
-print "\nmaster password: ";
+print "\nmaster passphrase: ";
 my $mp = read_s();
-die "need master password\n" unless $mp;
+die "need master passphrase\n" unless $mp;
 
 # print, xsel, etc...
 show( hap2( $ss, $mp ) );
@@ -55,7 +55,7 @@ sub hap2 {
     my $salt = sha256($ss);
     # everything is in 256 bits from now on
 
-    # step 1 -- hmac with the master password
+    # step 1 -- hmac with the master passphrase
     my $h1 = hmac_sha256( $salt, $mp );
     my $h2 = ROMix($h1);
     my $h3 = hmac_sha256_base64( $salt, $h2 );
@@ -96,7 +96,7 @@ sub site_cust {
     my $check = sha256_base64($h);
     $check = substr($check, 0, 2) . substr($check, -2);
     if ( my $c = $sd{check} ) {
-        die "FATAL: check value mismatch; possible wrong password entered\n" if $c ne $check;
+        die "FATAL: check value mismatch; possible wrong passphrase entered\n" if $c ne $check;
     } else {
         say "consider adding '$check' as the check value for this line";
     }
