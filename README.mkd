@@ -24,7 +24,7 @@ this point you wait for a while and it prints you the computed password.
 
 If you don't have your sitelist file handy, but you *are* on a machine you
 trust, *and* you remember the details of the site for which you need the
-password, you can just get the hap2 script [scr] and run a command like this:
+password, you can just get the [hap2 script][scr] and run a command like this:
 
     hap2 sitaramc 1 gmail.com
 
