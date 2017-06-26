@@ -37,7 +37,7 @@ if (@ARGV >= 3) {
 # create the internal salt, to be used in the hap2() function
 my $ss = "$sd{user}+$sd{salt}\@$sd{site}";
 
-print "\nmaster passphrase: ";
+print STDERR "\nmaster passphrase: ";
 my $mp = read_s();
 die "need master passphrase\n" unless $mp;
 
@@ -49,7 +49,7 @@ show( hap2( $ss, $mp ) );
 sub hap2 {
     my ( $ss, $mp ) = @_;
     t_start();
-    say "computing password for '$ss'";
+    say STDERR "computing password for '$ss'";
 
     # convert to 256 bits :-)
     my $salt = sha256($ss);
@@ -98,7 +98,7 @@ sub site_cust {
     if ( my $c = $sd{check} ) {
         die "FATAL: check value mismatch; possible wrong passphrase entered\n" if $c ne $check;
     } else {
-        say "consider adding '$check' as the check value for this line";
+        say STDERR "consider adding '$check' as the check value for this line";
     }
 
     # len
@@ -150,17 +150,6 @@ sub read_s {
 sub show {
     my $sha = shift;
     say $sha;
-    # if $DISPLAY is set, set the X selection, wait, and clear it
-    if ( $ENV{DISPLAY} ) {
-        system("echo -n '$sha' | xsel -b");
-        # clear out xsel if done (or user can Ctrl-C out)
-        print "X selection buffer set; press enter to clear it:";
-        <>;
-        my $dummy = '#' x 160;
-        system("echo -n '$dummy' | xsel -b");
-        $dummy = '#' x 16;
-        system("echo -n '$dummy' | xsel -b");
-    }
 }
 
 sub dd {
