@@ -129,3 +129,33 @@ now.  (Again, see TODO list for more).
 
 [scrypt]: http://www.tarsnap.com/scrypt.html
 [spdf]: http://www.tarsnap.com/scrypt/scrypt-slides.pdf
+
+<!--
+
+# TODO
+
+Update 2018-12-16: Realistically, the TODO list below will never get done,
+since even I have kinda stopped using hap2 except as a *generator* of
+passwords, and am keeping both the passwords and hints to re-generate them
+using pass (Jason Donenfeld's password-store).
+
+So I moved the text from the TODO file to this one.
+
+Contents of old TODO file:
+
+Right now, hap2 uses a fixed format file that is manually edited.
+
+Ideally, hap2 will have a wrapper that maintains this file, and maybe a UI of
+some sort, to provide the following features:
+
+  * generate and save random salt for a site
+  * mark some sites "high risk" and force a longer master password for them
+  * set number of rounds for a site (currently hardcoded to 1 million)
+  * save miscellaneous notes for a site
+  * keep a log so you can see when you last logged on to a site
+  * support sites that have max key lengths or other rules for passwords
+
+hap2 will of course change a bit to accommodate all this (like honor the max
+key length setting, etc) but most of it will be in the wrapper program.
+
+-->
